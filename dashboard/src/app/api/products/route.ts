@@ -47,3 +47,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to add product' }, { status: 500 });
   }
 }
+
+// DELETE: Remove product from database (Cascade deletes price_history automatically)
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
+    }
+
+    await pool.query('DELETE FROM tracked_products WHERE id = $1;', [id]);
+
+    return NextResponse.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Database Delete Error:', error);
+    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
+  }
+}

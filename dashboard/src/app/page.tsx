@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { TrendingDown, Plus, Store, CheckCircle, AlertCircle, Clock, PackageCheck, PackageX } from 'lucide-react';
+import { 
+  Plus, Store, CheckCircle, AlertCircle, Clock, PackageCheck, PackageX, Trash2 
+} from 'lucide-react';
 
 interface PricePoint {
   price: number;
@@ -23,6 +25,7 @@ interface Product {
 export default function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   
   // Form state
   const [name, setName] = useState('');
@@ -74,6 +77,28 @@ export default function Dashboard() {
       console.error('Error adding product:', err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteProduct = async (id: number) => {
+    if (!confirm('Are you sure you want to stop tracking this product?')) return;
+
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/products?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        // Remove item from state locally for instant feedback
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+      } else {
+        alert('Failed to delete product.');
+      }
+    } catch (err) {
+      console.error('Error deleting product:', err);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -165,7 +190,6 @@ export default function Dashboard() {
                     })
                   : null;
 
-                // Format chart data with both date and full time string
                 const chartData = history.map((item) => {
                   const dateObj = new Date(item.date);
                   return {
@@ -176,7 +200,7 @@ export default function Dashboard() {
                       day: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit',
-                      timeZoneName:'short',
+                      timeZoneName: 'short',
                     }),
                   };
                 });
@@ -187,27 +211,39 @@ export default function Dashboard() {
                     {/* Left Details */}
                     <div className="space-y-3">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-lg text-slate-900">{product.product_name}</h3>
-                          
-                          {/* Stock Status Badge */}
-                          {latestRecord && (
-                            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                              isStocked 
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                                : 'bg-rose-50 text-rose-700 border border-rose-200'
-                            }`}>
-                              {isStocked ? (
-                                <>
-                                  <PackageCheck className="w-3.5 h-3.5" /> In Stock
-                                </>
-                              ) : (
-                                <>
-                                  <PackageX className="w-3.5 h-3.5" /> Out of Stock
-                                </>
-                              )}
-                            </span>
-                          )}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-lg text-slate-900">{product.product_name}</h3>
+                            
+                            {/* Stock Status Badge */}
+                            {latestRecord && (
+                              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                isStocked 
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                              }`}>
+                                {isStocked ? (
+                                  <>
+                                    <PackageCheck className="w-3.5 h-3.5" /> In Stock
+                                  </>
+                                ) : (
+                                  <>
+                                    <PackageX className="w-3.5 h-3.5" /> Out of Stock
+                                  </>
+                                )}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDeleteProduct(product.id)}
+                            disabled={deletingId === product.id}
+                            title="Remove tracked product"
+                            className="text-slate-400 hover:text-rose-600 transition-colors p-1.5 rounded-lg hover:bg-rose-50 disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
 
                         <a href={product.store_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block truncate mt-1">
@@ -244,15 +280,14 @@ export default function Dashboard() {
                       {chartData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={chartData}>
-                            <XAxis
-                            dataKey="timestamp"
-                            stroke="#94a3b8"
-                            fontSize={11}
-                            tickFormatter={(value) => value.split(',')[0]}
+                            <XAxis 
+                              dataKey="timestamp" 
+                              stroke="#94a3b8" 
+                              fontSize={11} 
+                              tickFormatter={(val) => val.split(',')[0]} 
                             />
                             <YAxis stroke="#94a3b8" fontSize={12} domain={['auto', 'auto']} />
                             
-                            {/* Hover Tooltip displaying exact date and time */}
                             <Tooltip 
                               content={({ active, payload }) => {
                                 if (active && payload && payload.length) {
@@ -274,6 +309,7 @@ export default function Dashboard() {
                               stroke="#2563eb" 
                               strokeWidth={3} 
                               dot={{ r: 5, fill: '#2563eb' }} 
+                              activeDot={{ r: 7 }}
                             />
                           </LineChart>
                         </ResponsiveContainer>
