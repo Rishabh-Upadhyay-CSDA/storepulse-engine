@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
 
-// Connect to Neon PostgreSQL DB
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// GET: Fetch all products and their price history
 export async function GET() {
   try {
     const productsQuery = await pool.query(`
       SELECT p.id, p.product_name, p.store_url, p.target_price,
         (
           SELECT JSON_AGG(
-            JSON_BUILD_OBJECT('price', ph.price, 'date', ph.scraped_at)
+            JSON_BUILD_OBJECT(
+              'price', ph.price, 
+              'date', ph.scraped_at,
+              'in_stock', ph.in_stock
+            )
             ORDER BY ph.scraped_at ASC
           )
           FROM price_history ph WHERE ph.product_id = p.id
@@ -29,7 +31,6 @@ export async function GET() {
   }
 }
 
-// POST: Add a new product to track
 export async function POST(request: Request) {
   try {
     const { name, storeUrl, targetPrice } = await request.json();

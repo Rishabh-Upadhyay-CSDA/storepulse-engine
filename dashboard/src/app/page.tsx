@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { TrendingDown, Plus, Store, CheckCircle, AlertCircle } from 'lucide-react';
+import { TrendingDown, Plus, Store, CheckCircle, AlertCircle, Clock, PackageCheck, PackageX } from 'lucide-react';
 
 interface PricePoint {
   price: number;
   date: string;
+  in_stock: boolean;
 }
 
 interface Product {
@@ -29,7 +30,6 @@ export default function Dashboard() {
   const [targetPrice, setTargetPrice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch products from our Next.js API route
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/products');
@@ -68,7 +68,7 @@ export default function Dashboard() {
         setName('');
         setStoreUrl('');
         setTargetPrice('');
-        fetchProducts(); // Refresh product list
+        fetchProducts();
       }
     } catch (err) {
       console.error('Error adding product:', err);
@@ -152,7 +152,19 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 gap-6">
               {products.map((product) => {
                 const history = product.history || [];
-                const latestPrice = history.length > 0 ? history[history.length - 1].price : null;
+                const latestRecord = history.length > 0 ? history[history.length - 1] : null;
+                const latestPrice = latestRecord ? latestRecord.price : null;
+                const isStocked = latestRecord ? latestRecord.in_stock : true;
+
+                // Format timestamp for display (e.g., "Jul 27, 3:45 PM")
+                const lastScrapedFormatted = latestRecord
+                  ? new Date(latestRecord.date).toLocaleString([], {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : null;
 
                 // Format chart data
                 const chartData = history.map((item) => ({
@@ -164,24 +176,58 @@ export default function Dashboard() {
                   <div key={product.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
                     
                     {/* Left Details */}
-                    <div className="space-y-2">
-                      <h3 className="font-bold text-lg text-slate-900">{product.product_name}</h3>
-                      <a href={product.store_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block truncate">
-                        {product.store_url}
-                      </a>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-lg text-slate-900">{product.product_name}</h3>
+                          
+                          {/* Stock Status Badge */}
+                          {latestRecord && (
+                            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                              isStocked 
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            }`}>
+                              {isStocked ? (
+                                <>
+                                  <PackageCheck className="w-3.5 h-3.5" /> In Stock
+                                </>
+                              ) : (
+                                <>
+                                  <PackageX className="w-3.5 h-3.5" /> Out of Stock
+                                </>
+                              )}
+                            </span>
+                          )}
+                        </div>
+
+                        <a href={product.store_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block truncate mt-1">
+                          {product.store_url}
+                        </a>
+                      </div>
                       
-                      <div className="mt-4 pt-2">
+                      <div>
                         <span className="text-xs text-slate-500">Current Tracked Price</span>
                         <div className="text-2xl font-extrabold text-slate-900">
                           {latestPrice ? `$${Number(latestPrice).toFixed(2)}` : 'Awaiting Batch Scan'}
                         </div>
                       </div>
 
-                      {product.target_price && (
-                        <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
-                          <AlertCircle className="w-3 h-3" /> Target Price: ${Number(product.target_price).toFixed(2)}
-                        </span>
-                      )}
+                      {/* Timestamps & Alerts */}
+                      <div className="flex flex-col gap-1.5 pt-1">
+                        {lastScrapedFormatted && (
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Last scanned: <strong>{lastScrapedFormatted}</strong></span>
+                          </div>
+                        )}
+
+                        {product.target_price && (
+                          <div className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded w-fit">
+                            <AlertCircle className="w-3 h-3" /> Target Price: ${Number(product.target_price).toFixed(2)}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Right Interactive Chart */}
