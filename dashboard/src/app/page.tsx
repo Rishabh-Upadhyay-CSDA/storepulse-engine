@@ -156,7 +156,6 @@ export default function Dashboard() {
                 const latestPrice = latestRecord ? latestRecord.price : null;
                 const isStocked = latestRecord ? latestRecord.in_stock : true;
 
-                // Format timestamp for display (e.g., "Jul 27, 3:45 PM")
                 const lastScrapedFormatted = latestRecord
                   ? new Date(latestRecord.date).toLocaleString([], {
                       month: 'short',
@@ -166,11 +165,20 @@ export default function Dashboard() {
                     })
                   : null;
 
-                // Format chart data
-                const chartData = history.map((item) => ({
-                  price: Number(item.price),
-                  date: new Date(item.date).toLocaleDateString([], { month: 'short', day: 'numeric' }),
-                }));
+                // Format chart data with both date and full time string
+                const chartData = history.map((item) => {
+                  const dateObj = new Date(item.date);
+                  return {
+                    price: Number(item.price),
+                    date: dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' }),
+                    timestamp: dateObj.toLocaleString([], {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }),
+                  };
+                });
 
                 return (
                   <div key={product.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
@@ -237,7 +245,18 @@ export default function Dashboard() {
                           <LineChart data={chartData}>
                             <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
                             <YAxis stroke="#94a3b8" fontSize={12} domain={['auto', 'auto']} />
-                            <Tooltip formatter={(value: any) => [`$${value}`, 'Price']} />
+                            
+                            {/* Hover Tooltip displaying exact date and time */}
+                            <Tooltip 
+                              labelFormatter={(_, items) => {
+                                if (items && items.length > 0) {
+                                  return items[0].payload.timestamp;
+                                }
+                                return '';
+                              }}
+                              formatter={(value: any) => [`$${value}`, 'Price']} 
+                            />
+                            
                             <Line 
                               type="monotone" 
                               dataKey="price" 
