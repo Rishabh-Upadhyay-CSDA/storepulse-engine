@@ -30,7 +30,7 @@ export function ProductCard({ product }: { product: Product }) {
             {product.title}
           </a>
           
-          {/* Last Scanned with Local Time & Timezone */}
+          {/* Last Scanned formatted to local browser time + timezone */}
           <p className="mt-1 text-xs text-gray-500">
             Last Scanned:{" "}
             <span className="font-medium text-gray-700">
@@ -61,7 +61,7 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
       </div>
 
-      {/* Interactive Price Chart with Timezone-Aware Tooltip */}
+      {/* Interactive Price Chart Component */}
       <PriceChart data={product.price_history} />
     </div>
   );

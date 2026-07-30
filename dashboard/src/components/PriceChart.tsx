@@ -16,11 +16,7 @@ interface PriceHistoryPoint {
   price: number;
 }
 
-interface PriceChartProps {
-  data: PriceHistoryPoint[];
-}
-
-export function PriceChart({ data }: PriceChartProps) {
+export function PriceChart({ data }: { data: PriceHistoryPoint[] }) {
   if (!data || data.length === 0) {
     return (
       <div className="flex h-32 items-center justify-center text-sm text-gray-400">
@@ -34,33 +30,32 @@ export function PriceChart({ data }: PriceChartProps) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+          
           <XAxis
             dataKey="scanned_at"
-            tickFormatter={(value) =>
-              new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-            }
+            tickFormatter={(val) => {
+              const d = new Date(val.endsWith("Z") ? val : val.replace(" ", "T") + "Z");
+              return isNaN(d.getTime())
+                ? val
+                : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            }}
             stroke="#9CA3AF"
             fontSize={12}
           />
+          
           <YAxis stroke="#9CA3AF" fontSize={12} />
+          
           <Tooltip
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                const point = payload[0].payload as PriceHistoryPoint;
-                return (
-                  <div className="rounded-lg border border-gray-100 bg-white p-3 shadow-md">
-                    <p className="text-xs font-semibold text-gray-900">
-                      ${point.price.toFixed(2)}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      {formatLocalTimestamp(point.scanned_at)}
-                    </p>
-                  </div>
-                );
-              }
-              return null;
+            labelFormatter={(label) => formatLocalTimestamp(label)}
+            formatter={(value: any) => [`$${Number(value).toFixed(2)}`, "Price"]}
+            contentStyle={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "0.5rem",
+              borderColor: "#E5E7EB",
+              boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
             }}
           />
+          
           <Line
             type="monotone"
             dataKey="price"
