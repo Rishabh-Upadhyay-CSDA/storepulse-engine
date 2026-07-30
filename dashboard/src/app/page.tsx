@@ -1,0 +1,221 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { 
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer 
+} from 'recharts';
+import { TrendingDown, Plus, Store, CheckCircle, AlertCircle } from 'lucide-react';
+
+interface PricePoint {
+  price: number;
+  date: string;
+}
+
+interface Product {
+  id: number;
+  product_name: string;
+  store_url: string;
+  target_price: number | null;
+  history: PricePoint[] | null;
+}
+
+export default function Dashboard() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Form state
+  const [name, setName] = useState('');
+  const [storeUrl, setStoreUrl] = useState('');
+  const [targetPrice, setTargetPrice] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch products from our Next.js API route
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      if (data.products) {
+        setProducts(data.products);
+      }
+    } catch (err) {
+      console.error('Failed to load products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !storeUrl) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          storeUrl,
+          targetPrice: targetPrice ? parseFloat(targetPrice) : null,
+        }),
+      });
+
+      if (res.ok) {
+        setName('');
+        setStoreUrl('');
+        setTargetPrice('');
+        fetchProducts(); // Refresh product list
+      }
+    } catch (err) {
+      console.error('Error adding product:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center border-b pb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+              <Store className="w-8 h-8 text-blue-600" />
+              StorePulse Intelligence
+            </h1>
+            <p className="text-slate-500 mt-1">
+              Automated E-Commerce Price & Competitor Tracking Dashboard
+            </p>
+          </div>
+          <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
+            <CheckCircle className="w-4 h-4" />
+            Batch Engine Active
+          </div>
+        </div>
+
+        {/* Add Product Form */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+          <h2 className="text-lg font-semibold mb-4 text-slate-800 flex items-center gap-2">
+            <Plus className="w-5 h-5 text-blue-600" /> Add Competitor Product to Track
+          </h2>
+          <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <input
+              type="text"
+              placeholder="Product Label (e.g. Wool Runners)"
+              className="p-2.5 border rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <input
+              type="url"
+              placeholder="Shopify Store URL (e.g. https://allbirds.com)"
+              className="p-2.5 border rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+              value={storeUrl}
+              onChange={(e) => setStoreUrl(e.target.value)}
+              required
+            />
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Target Alert Price ($)"
+              className="p-2.5 border rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+              value={targetPrice}
+              onChange={(e) => setTargetPrice(e.target.value)}
+            />
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium p-2.5 rounded-lg text-sm transition-all disabled:opacity-50"
+            >
+              {isSubmitting ? 'Adding...' : 'Track Product'}
+            </button>
+          </form>
+        </div>
+
+        {/* Product Cards & Charts */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-slate-800">Tracked Items</h2>
+
+          {loading ? (
+            <p className="text-slate-500 text-sm">Loading tracked products from Neon PostgreSQL...</p>
+          ) : products.length === 0 ? (
+            <div className="p-8 text-center bg-white rounded-xl border text-slate-500">
+              No products tracked yet. Add a Shopify URL above to start monitoring!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6">
+              {products.map((product) => {
+                const history = product.history || [];
+                const latestPrice = history.length > 0 ? history[history.length - 1].price : null;
+
+                // Format chart data
+                const chartData = history.map((item) => ({
+                  price: Number(item.price),
+                  date: new Date(item.date).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+                }));
+
+                return (
+                  <div key={product.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    
+                    {/* Left Details */}
+                    <div className="space-y-2">
+                      <h3 className="font-bold text-lg text-slate-900">{product.product_name}</h3>
+                      <a href={product.store_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block truncate">
+                        {product.store_url}
+                      </a>
+                      
+                      <div className="mt-4 pt-2">
+                        <span className="text-xs text-slate-500">Current Tracked Price</span>
+                        <div className="text-2xl font-extrabold text-slate-900">
+                          {latestPrice ? `$${Number(latestPrice).toFixed(2)}` : 'Awaiting Batch Scan'}
+                        </div>
+                      </div>
+
+                      {product.target_price && (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
+                          <AlertCircle className="w-3 h-3" /> Target Price: ${Number(product.target_price).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Right Interactive Chart */}
+                    <div className="md:col-span-2 h-44 w-full">
+                      {chartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData}>
+                            <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
+                            <YAxis stroke="#94a3b8" fontSize={12} domain={['auto', 'auto']} />
+                            <Tooltip formatter={(value: any) => [`$${value}`, 'Price']} />
+                            <Line 
+                              type="monotone" 
+                              dataKey="price" 
+                              stroke="#2563eb" 
+                              strokeWidth={3} 
+                              dot={{ r: 4, fill: '#2563eb' }} 
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-full flex items-center justify-center bg-slate-50 rounded-lg text-slate-400 text-xs">
+                          Pending price history. Data will render after the next batch run.
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+}
