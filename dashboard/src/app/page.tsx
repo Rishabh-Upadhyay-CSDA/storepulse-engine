@@ -248,13 +248,18 @@ export default function Dashboard() {
                             
                             {/* Hover Tooltip displaying exact date and time */}
                             <Tooltip 
-                              labelFormatter={(_, items) => {
-                                if (items && items.length > 0) {
-                                  return items[0].payload.timestamp;
+                              content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  const data = payload[0].payload;
+                                  return (
+                                    <div className="bg-slate-900 text-white p-2.5 rounded-lg shadow-lg text-xs space-y-1">
+                                      <p className="text-slate-400 font-medium">{data.timestamp}</p>
+                                      <p className="text-sm font-bold text-blue-400">${data.price.toFixed(2)}</p>
+                                    </div>
+                                  );
                                 }
-                                return '';
+                                return null;
                               }}
-                              formatter={(value: any) => [`$${value}`, 'Price']} 
                             />
                             
                             <Line 
