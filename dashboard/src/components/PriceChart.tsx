@@ -34,9 +34,10 @@ export function PriceChart({ data }: { data: PriceHistoryPoint[] }) {
           <XAxis
             dataKey="scanned_at"
             tickFormatter={(val) => {
-              const d = new Date(val.endsWith("Z") ? val : val.replace(" ", "T") + "Z");
+              const strVal = String(val);
+              const d = new Date(strVal.endsWith("Z") ? strVal : strVal.replace(" ", "T") + "Z");
               return isNaN(d.getTime())
-                ? val
+                ? strVal
                 : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
             }}
             stroke="#9CA3AF"
@@ -46,7 +47,7 @@ export function PriceChart({ data }: { data: PriceHistoryPoint[] }) {
           <YAxis stroke="#9CA3AF" fontSize={12} />
           
           <Tooltip
-            labelFormatter={(label) => formatLocalTimestamp(label)}
+            labelFormatter={(label) => formatLocalTimestamp(label ? String(label) : "")}
             formatter={(value: any) => [`$${Number(value).toFixed(2)}`, "Price"]}
             contentStyle={{
               backgroundColor: "#FFFFFF",
