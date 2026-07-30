@@ -243,7 +243,12 @@ export default function Dashboard() {
                       {chartData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={chartData}>
-                            <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
+                            <XAxis
+                            dataKey="timestamp"
+                            stroke="#94a3b8"
+                            fontSize={11}
+                            tickFormatter={(value) => value.split(',')[0]}
+                            />
                             <YAxis stroke="#94a3b8" fontSize={12} domain={['auto', 'auto']} />
                             
                             {/* Hover Tooltip displaying exact date and time */}
@@ -254,7 +259,7 @@ export default function Dashboard() {
                                   return (
                                     <div className="bg-slate-900 text-white p-2.5 rounded-lg shadow-lg text-xs space-y-1">
                                       <p className="text-slate-400 font-medium">{data.timestamp}</p>
-                                      <p className="text-sm font-bold text-blue-400">${data.price.toFixed(2)}</p>
+                                      <p className="text-sm font-bold text-blue-400">${Number(data.price).toFixed(2)}</p>
                                     </div>
                                   );
                                 }
@@ -267,7 +272,7 @@ export default function Dashboard() {
                               dataKey="price" 
                               stroke="#2563eb" 
                               strokeWidth={3} 
-                              dot={{ r: 4, fill: '#2563eb' }} 
+                              dot={{ r: 5, fill: '#2563eb' }} 
                             />
                           </LineChart>
                         </ResponsiveContainer>
