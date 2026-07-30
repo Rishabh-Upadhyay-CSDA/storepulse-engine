@@ -125,7 +125,7 @@ export default function Dashboard() {
             </div>
 
             {/* Clerk User Profile & Sign Out Avatar */}
-            <UserButton afterSignOutUrl="/sign-in" />
+            <UserButton />
           </div>
         </div>
 
