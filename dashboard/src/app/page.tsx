@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { UserButton } from '@clerk/nextjs';
 import { 
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer 
 } from 'recharts';
@@ -90,7 +91,6 @@ export default function Dashboard() {
       });
 
       if (res.ok) {
-        // Remove item from state locally for instant feedback
         setProducts((prev) => prev.filter((p) => p.id !== id));
       } else {
         alert('Failed to delete product.');
@@ -117,9 +117,15 @@ export default function Dashboard() {
               Automated E-Commerce Price & Competitor Tracking Dashboard
             </p>
           </div>
-          <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
-            <CheckCircle className="w-4 h-4" />
-            Batch Engine Active
+          
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Batch Engine Active
+            </div>
+
+            {/* Clerk User Profile & Sign Out Avatar */}
+            <UserButton afterSignOutUrl="/sign-in" />
           </div>
         </div>
 
