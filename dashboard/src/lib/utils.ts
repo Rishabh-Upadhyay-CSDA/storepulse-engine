@@ -6,7 +6,7 @@ export function formatLocalTimestamp(isoString: string | null | undefined): stri
 
   let cleanStr = String(isoString).trim();
 
-  // If DB output is "2026-07-31 12:00:00", convert space to T and append Z to mark UTC
+  // Handle standard SQL strings like "2026-07-31 12:00:00"
   if (!cleanStr.includes("T")) {
     cleanStr = cleanStr.replace(" ", "T");
   }
@@ -27,24 +27,4 @@ export function formatLocalTimestamp(isoString: string | null | undefined): stri
     hour12: true,
     timeZoneName: "short", // Displays IST, EST, PST, etc.
   }).format(date);
-}
-
-// Formats numbers into currency strings based on product currency code (USD, INR, EUR, etc.)
-export function formatCurrency(
-  amount: number | null | undefined,
-  currency: string = "USD"
-): string {
-  if (amount == null || isNaN(amount)) return "$0.00";
-
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency.toUpperCase(),
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    // Fallback if an invalid currency code is supplied
-    return `$${Number(amount).toFixed(2)}`;
-  }
 }
