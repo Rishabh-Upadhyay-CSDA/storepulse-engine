@@ -16,12 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider
-      appearance={{
-        // Passed directly under appearance in newer Clerk SDK versions
-        unsafe_disableDevelopmentModeWarnings: true,
-      }}
-    >
+    <ClerkProvider>
       <html lang="en" className="h-full">
         <body
           className={`${inter.className} flex min-h-screen flex-col bg-slate-950 text-slate-100 antialiased selection:bg-blue-500 selection:text-white`}
