@@ -18,9 +18,8 @@ export default function RootLayout({
   return (
     <ClerkProvider
       appearance={{
-        layout: {
-          unsafe_disableDevelopmentModeWarnings: true,
-        },
+        // Passed directly under appearance in newer Clerk SDK versions
+        unsafe_disableDevelopmentModeWarnings: true,
       }}
     >
       <html lang="en" className="h-full">
