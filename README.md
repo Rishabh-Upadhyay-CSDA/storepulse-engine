@@ -67,25 +67,21 @@ storepulse-engine/
 Run the following DDL statements in your Neon SQL Console to create tables with TIMESTAMPTZ timezone support:
 
 ```text
--- Create Products Table
-CREATE TABLE IF NOT EXISTS products (
-    id UUID PRIMARY KEY DEFAULT gen_random_null(),
-    user_id VARCHAR(255) NOT NULL,
-    title TEXT NOT NULL,
-    product_url TEXT NOT NULL,
-    image_url TEXT,
-    current_price NUMERIC(10, 2) NOT NULL,
-    target_price NUMERIC(10, 2) NOT NULL,
-    last_scanned TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE tracked_products (
+    id SERIAL PRIMARY KEY,
+    user_email VARCHAR(255) NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    store_url TEXT NOT NULL,
+    target_price NUMERIC(10, 2),
+    created_at TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create Price History Table
-CREATE TABLE IF NOT EXISTS price_history (
-    id UUID PRIMARY KEY DEFAULT gen_random_null(),
-    product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+CREATE TABLE price_history (
+    id SERIAL PRIMARY KEY,
+    product_id INT REFERENCES tracked_products(id) ON DELETE CASCADE,
     price NUMERIC(10, 2) NOT NULL,
-    scanned_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    in_stock BOOLEAN NOT NULL,
+    scraped_at TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -103,7 +99,7 @@ CREATE TABLE IF NOT EXISTS price_history (
    ```text
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
    CLERK_SECRET_KEY=sk_test_...
-   DATABASE_URL=postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require
+   DATABASE_URL=postgresql://user:...@...neon.tech/neondb?sslmode=require
    ```
 
 4. Start the Next.js development server:
