@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "StorePulse | Real-time Price Tracker",
+  title: "StorePulse | Real-Time Price Tracker",
   description: "Track price drops and market trends in real time.",
 };
 
@@ -46,7 +46,7 @@ export default function RootLayout({
                       StorePulse
                     </span>
                     <p className="text-xs text-slate-500">
-                      Automated real-time e-commerce price monitoring.
+                      This project is open-source and available under the MIT License.
                     </p>
                   </div>
                 </div>
